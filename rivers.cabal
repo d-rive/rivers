@@ -1,6 +1,6 @@
 name:           rivers
 version:        0.1.0
-synopsis:       Rivers are like Streams, but more different-er.
+synopsis:       Rivers are like Streams, but different.
 license:        BSD3
 license-file:   LICENSE.md
 author:         Drew Day <drewday@gmail.com>

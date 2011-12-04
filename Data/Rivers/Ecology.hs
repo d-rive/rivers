@@ -109,7 +109,7 @@ import Data.Rivers.Streams
 
 
 sZero :: S Integer
-sZero          = 0 <|| (smerge sZero (stail sZero))
+sZero          = 0 <|| smerge sZero (stail sZero)
 -- ^
 -- >>>    stake 30 $ sZero
 -- [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
@@ -160,7 +160,7 @@ sOne = 1 <|| sOne
 -- [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
 sOnes :: S Integer
-sOnes = 1 <|| (smerge (sOnes) (stail sOnes))
+sOnes = 1 <|| smerge sOnes (stail sOnes)
 -- ^
 -- >>> stake 30 $ sOnes
 -- [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
@@ -212,7 +212,7 @@ altOnes = 0 <|| altOnes + 1 - carry
 
 
 sNat :: S Integer
-sNat           = 0 <|| (sMap (+1) sNat)
+sNat           = 0 <|| sMap (+1) sNat
 -- ^
 -- >>> stake 30 $ sNat
 -- [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
@@ -291,10 +291,10 @@ bin = 0 <||    2 * bin + 1    |~|       2 * bin + 2
 -- >>> take 15 $ fromOEIS "A122803"
 -- [1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384]
 
-rev_powers_of_n2 :: S Integer
-rev_powers_of_n2 = revFix a122803
+revPowersOfN2 :: S Integer
+revPowersOfN2 = revFix a122803
 -- ^
--- >>> stake 15 $ rev_powers_of_n2
+-- >>> stake 15 $ revPowersOfN2
 -- [1,-2,4,-8,16,-32,64,-128,256,-512,1024,-2048,4096,-8192,16384]
 
 a122803 :: G Integer Integer
@@ -325,10 +325,10 @@ pot = True <|| pot |~| srepeat False
 -- >>> take 15 $ fromOEIS "A000244"
 -- [1,3,9,27,81,243,729,2187,6561,19683,59049,177147,531441,1594323,4782969]
 
-rev_powers_of_3 :: S Integer
-rev_powers_of_3 = revFix pothree
+revPowersOf3 :: S Integer
+revPowersOf3 = revFix pothree
 -- ^
--- >>> stake 15 $ rev_powers_of_3
+-- >>> stake 15 $ revPowersOf3
 -- [1,3,9,27,81,243,729,2187,6561,19683,59049,177147,531441,1594323,4782969]
 
 pothree :: G Integer Integer
@@ -382,7 +382,7 @@ sFac = 1 <|| (sNat + 1) * sFac
 -- [0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181,6765,10946,17711,28657,46368,75025,121393,196418,317811]
 
 sFib :: S Integer
-sFib           = 0 <|| 1 <|| (sMap2 (+) sFib (stail sFib))
+sFib           = 0 <|| 1 <|| sMap2 (+) sFib (stail sFib)
 -- ^
 -- >>> stake 29 $ sFib
 -- [0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181,6765,10946,17711,28657,46368,75025,121393,196418,317811]
@@ -434,7 +434,7 @@ gFibs xs = case length xs of
 
 
 sLucas :: S Integer
-sLucas     = 2 <|| 1 <|| (sMap2 (+) sLucas (stail sLucas))
+sLucas     = 2 <|| 1 <|| sMap2 (+) sLucas (stail sLucas)
 -- ^
 -- >>> stake 28 $ sLucas
 -- [2,1,3,4,7,11,18,29,47,76,123,199,322,521,843,1364,2207,3571,5778,9349,15127,24476,39603,64079,103682,167761,271443,439204]
@@ -458,18 +458,18 @@ rLucas (x:y:_) = x + y
 --
 
 fib4np1 :: S Integer
-fib4np1 = drop0L $ sFib
+fib4np1 = drop0L sFib
 -- ^ 
--- >>> stake 10 $ drop0L $ sFib
+-- >>> stake 10 $ drop0L sFib
 -- [1,5,34,233,1597,10946,75025,514229,3524578,24157817]
 -- 
 -- >>> take 10 $ fromOEIS "A033889"
 -- [1,5,34,233,1597,10946,75025,514229,3524578,24157817]
 
 luc4np1 :: S Integer
-luc4np1 = drop0L $ sLucas
+luc4np1 = drop0L sLucas
 -- ^
--- >>> stake 10 $ drop0L $ sLucas
+-- >>> stake 10 $ drop0L sLucas
 -- [1,11,76,521,3571,24476,167761,1149851,7881196,54018521]
 --
 -- >>> take 10 $ fromOEIS "A056914"
@@ -485,18 +485,18 @@ luc4np1 = drop0L $ sLucas
 --
 
 fib2n :: S Integer
-fib2n = dropIp1L $ sFib
+fib2n = dropIp1L sFib
 -- ^
--- >>> stake 20 $ dropIp1L $ sFib
+-- >>> stake 20 $ dropIp1L sFib
 -- [0,1,3,8,21,55,144,377,987,2584,6765,17711,46368,121393,317811,832040,2178309,5702887,14930352,39088169]
 --
 -- >>> take 20 $ fromOEIS "A001906"
 -- [0,1,3,8,21,55,144,377,987,2584,6765,17711,46368,121393,317811,832040,2178309,5702887,14930352,39088169]
 
 luc2n :: S Integer
-luc2n = dropIp1L $ sLucas
+luc2n = dropIp1L sLucas
 -- ^
--- >>> stake 20 $ dropIp1L $ sLucas
+-- >>> stake 20 $ dropIp1L sLucas
 -- [2,3,7,18,47,123,322,843,2207,5778,15127,39603,103682,271443,710647,1860498,4870847,12752043,33385282,87403803]
 --
 -- >>> take 20 $ fromOEIS "A005248"
@@ -565,7 +565,7 @@ padovanPP11010 =  [1,0,0,1,0] <<| padovan
 -- >>> take 30 $ fromOEIS "A134816"
 -- [1,1,1,2,2,3,4,5,7,9,12,16,21,28,37,49,65,86,114,151,200,265,351,465,616,816,1081,1432,1897,2513]
 padovan :: S Integer
-padovan   = 1 <|| 1 <|| 1 <|| (sMap2 (+) padovan  (stail padovan))
+padovan   = 1 <|| 1 <|| 1 <|| sMap2 (+) padovan  (stail padovan)
 -- ^
 -- >>> stake 30 $ padovan
 -- [1,1,1,2,2,3,4,5,7,9,12,16,21,28,37,49,65,86,114,151,200,265,351,465,616,816,1081,1432,1897,2513]
@@ -601,7 +601,7 @@ d2xpadovan = diff $ diff $ revFix rpadovan
 -- [3,0,2,3,2,5,5,7,10,12,17,22,29,39,51,68,90,119,158,209,277,367,486,644,853,1130,1497,1983,2627,3480]
 
 perrin :: S Integer
-perrin    = 3 <|| 0 <|| 2 <|| (sMap2 (+) perrin   (stail perrin))
+perrin    = 3 <|| 0 <|| 2 <|| sMap2 (+) perrin   (stail perrin)
 -- ^
 -- >>> stake 30 $ perrin
 -- [3,0,2,3,2,5,5,7,10,12,17,22,29,39,51,68,90,119,158,209,277,367,486,644,853,1130,1497,1983,2627,3480]
@@ -672,7 +672,7 @@ rpell (x:y:_)  = 2*x + y
 
 
 jacob :: S Integer
-jacob= 0 <|| 1 <|| (sMap2 (+) (sMap (*2) jacob) (stail jacob))
+jacob= 0 <|| 1 <|| sMap2 (+) (sMap (*2) jacob) (stail jacob)
 -- ^
 -- >>> stake 20 $ jacob
 -- [0,1,1,3,5,11,21,43,85,171,341,683,1365,2731,5461,10923,21845,43691,87381,174763]
@@ -696,7 +696,7 @@ rjacob (x:y:_) = x + 2*y
 -- [2,1,5,7,17,31,65,127,257,511,1025,2047,4097,8191,16385,32767,65537,131071,262145,524287]
 
 jacobl :: S Integer
-jacobl          = 2  <||  1 <|| (sMap2 (+) (sMap (*2) jacobl) (stail jacobl))
+jacobl          = 2  <||  1 <|| sMap2 (+) (sMap (*2) jacobl) (stail jacobl)
 -- ^
 -- >>> stake 20 $ jacobl
 -- [2,1,5,7,17,31,65,127,257,511,1025,2047,4097,8191,16385,32767,65537,131071,262145,524287]
@@ -735,7 +735,7 @@ jos = 1 <|| 2 * jos - 1 |~| 2 * jos + 1
 
 
 josAlt :: S Integer
-josAlt = 2 * ((stail sNat) - msb) + 1
+josAlt = 2 * (stail sNat - msb) + 1
 -- ^
 -- >>> stake 30 $ josAlt
 -- [1,1,3,1,3,5,7,1,3,5,7,9,11,13,15,1,3,5,7,9,11,13,15,17,19,21,23,25,27,29]
@@ -789,7 +789,7 @@ thue' = 1 <|| interleave thue' (inv thue')
 --------------------------------------------------------------------------------------------------------------------------------
 
 binlike1 :: S Integer
-binlike1      = 0 <|| 1 <||  (smerge (sMap (* 2) binlike1) (stail binlike1))
+binlike1      = 0 <|| 1 <||  smerge (sMap (* 2) binlike1) (stail binlike1)
 -- ^
 -- >>> stake 30 $ binlike1
 -- [0,1,0,1,2,0,0,1,2,2,4,0,0,0,0,1,2,2,4,2,4,4,8,0,0,0,0,0,0,0]
@@ -799,7 +799,7 @@ binlike1      = 0 <|| 1 <||  (smerge (sMap (* 2) binlike1) (stail binlike1))
 --------------------------------------------------------------------------------------------------------------------------------
 
 binlike2 :: S Integer
-binlike2      = 0 <|| 1 <||  (smerge (stail binlike2) (sMap (* 2) binlike2))
+binlike2      = 0 <|| 1 <||  smerge (stail binlike2) (sMap (* 2) binlike2)
 -- ^
 -- >>> stake 30 $ binlike2
 -- [0,1,1,0,1,2,0,2,1,0,2,2,0,4,2,0,1,4,0,2,2,0,2,4,0,4,4,0,2,8]
@@ -829,7 +829,7 @@ lsb = bsum 0 |~| 1
 -- [0,0,1,1,3,3,4,4,7,7,8,8,10,10,11,11,15,15,16,16,18,18,19,19,22,22,23,23,25,25]
 
 sumcarry :: S Integer
-sumcarry = bsum $ carry
+sumcarry = bsum  carry
 -- ^
 -- >>> stake 30 $ sumcarry
 -- [0,0,1,1,3,3,4,4,7,7,8,8,10,10,11,11,15,15,16,16,18,18,19,19,22,22,23,23,25,25]
@@ -916,8 +916,7 @@ apd2 :: (Floating a) => [a] -> a
 apd2 []          = -1
 apd2 [_]         = 2
 apd2 (_:_:[])    = 2
-apd2 (x:y:z:_)   = ((x + y + z) - sqrt((x*y + y*z + z*x)/12))
-
+apd2 (x:y:z:_)   = (x + y + z) + sqrt(x*y + y*z + z*x)
 
 
 
@@ -963,16 +962,16 @@ proy (_,_,_,_,_,_,x,_) 6 = x
 proy (_,_,_,_,_,_,_,x) 7 = x
 proy (_,_,_,_,_,_,_,_) _ = error "this is unreachable"
 
-stream_apd3 :: S Integer
-stream_apd3 = cfix apd3 (0,(0,0,1,1,1,2,2,3))
+streamApD3 :: S Integer
+streamApD3 = cfix apd3 (0,(0,0,1,1,1,2,2,3))
 -- ^
--- >>> stake 32 $ stream_apd3
+-- >>> stake 32 $ streamApD3
 -- [0,0,1,1,1,2,2,3,4,8,9,9,15,32,32,33,56,120,121,121,209,450,450,451,780,1680,1681,1681,2911,6272,6272,6273]
 
-stream_apd3' :: S (Integer, Integer, Integer, Integer, Integer, Integer, Integer, Integer)
-stream_apd3' = Cons (0,0,1,1,1,2,2,3) (sMap fr stream_apd3')
+streamApD3' :: S (Integer, Integer, Integer, Integer, Integer, Integer, Integer, Integer)
+streamApD3' = Cons (0,0,1,1,1,2,2,3) (sMap fr streamApD3')
 -- ^
--- >>> stake 4 $ stream_apd3'
+-- >>> stake 4 $ streamApD3'
 -- [(0,0,1,1,1,2,2,3),(4,8,9,9,15,32,32,33),(56,120,121,121,209,450,450,451),(780,1680,1681,1681,2911,6272,6272,6273)]
 
 -- GF:
@@ -1095,7 +1094,7 @@ montest = 1 <|| smap (47*) montest |!| smap (59*) montest |!| smap (71*) montest
 
 
 a092323 :: S Integer
-a092323 = (diff sNat - msb)
+a092323 = diff sNat - msb
 -- ^
 -- >>> stake 30 $ (diff sNat - msb)
 -- [0,-1,-1,-3,-3,-3,-3,-7,-7,-7,-7,-7,-7,-7,-7,-15,-15,-15,-15,-15,-15,-15,-15,-15,-15,-15,-15,-15,-15,-15]

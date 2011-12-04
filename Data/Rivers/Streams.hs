@@ -47,7 +47,7 @@ infixr 5 |!|
 ago            :: Integer -> S a ->  a
 
 
-any_a          :: S a
+anyA          :: S a
 
 
 
@@ -82,7 +82,7 @@ group          :: (Eq a) => S a -> S [a]
 
 
 fix            ::  (a -> a)   ->   a
-inits          :: S a -> S ([a])
+inits          :: S a -> S [a]
 interleave3    :: S a -> S a -> S a
 intersperse    :: a -> S a -> S a
 map1           :: (a -> b) -> S a -> S b
@@ -104,15 +104,15 @@ type G v o = [v] -> o
 -- ** Generating Functions, etc
 fromFG         :: G a a            -> S a
 revFix         :: G a a            -> S a
-rgen           :: G a b            -> (S a -> S b)
+rgen           :: G a b            -> S a -> S b
 fwdFix         :: G a a            -> S a
-grow           :: G a b            -> (S a -> S b)
+grow           :: G a b            -> S a -> S b
 
 hOfFG          :: G a b            -> b
 tOfFG          :: G a b            -> a     -> G a b
 
 rep            :: (S a -> S b)     -> G a b
-rgen'          ::                     G a b            -> [a]    ->    (S a -> S b)
+rgen'          ::                     G a b            -> [a]    ->    S a -> S b
 hOfRG          :: (G a b, [a])     -> b
 tOfRG          :: (G a b, [a])     -> a     -> (G a b, [a])
 fromRG         :: (G a a, [a])     -> S a
@@ -129,7 +129,7 @@ data Tree a o = Node o (a -> Tree a o)
 
 
 -- ** Trees
-branches       ::             Tree a b -> (a -> Tree a b)
+branches       ::             Tree a b -> a  -> Tree a b
 fromT          ::             Tree a a       -> S a
 label          ::             Tree a b -> b
 
@@ -143,16 +143,16 @@ type Coalg c a b = (c -> b, c -> a -> c)
 -- ** Coalgebraic
 unfold         :: Coalg c a b -> c -> Tree a b
 cfix           :: Coalg c a a -> c -> S a
-groW           :: Coalg c a b -> c -> (S a -> S b)
+groW           :: Coalg c a b -> c -> S a -> S b
 
 sMap           :: (a -> b)                   -> S a -> S b
 sMap2          :: (a -> b -> c)              -> S a -> S b -> S c
 sMap3          :: (a -> b -> c -> d)         -> S a -> S b -> S c -> S d
 sMap4          :: (a -> b -> c -> d -> e)    -> S a -> S b -> S c -> S d -> S e
 
-s_even         ::             S a -> S a
+sEven         ::             S a -> S a
 seven          ::             S a -> S a
-s_odd          ::             S a -> S a
+sOdd          ::             S a -> S a
 sodd           ::             S a -> S a
 
 
@@ -171,7 +171,7 @@ scan1'         :: (a -> a -> a)      -> S a -> S a
 scycle         :: [a] -> S a
 
 -- ** Drivers
-siterate       :: (a -> a) -> (a -> S a)
+siterate       :: (a -> a) -> a -> S a
 
 -- ** Heads and Tails
 shead          :: S a ->   a
@@ -206,7 +206,7 @@ fromOEIS       :: String -> [Integer]
 
 
 instance Functor S where
- fmap f ~(Cons h t) = (f h) <|| (fmap f t)
+ fmap f ~(Cons h t) = f h <|| fmap f t
 
 instance Monad S where
   return = srepeat
@@ -229,7 +229,7 @@ instance Serial a => Serial (S a) where
 
 instance Idiom S where
      pure a = s where s = a <|| s
-     s <> t = (shead s) (shead t) <|| (stail s) <> (stail t)
+     s <> t = shead s (shead t) <|| stail s <> stail t
      srepeat a = s where s = a <|| s
      smap f s = f (shead s) <|| smap f (stail s)
      zip g s t = g (shead s) (shead t) <|| zip g (stail s) (stail t)
@@ -238,9 +238,9 @@ instance (Num a) => Num (S a) where
      (+) = zip (+)
      (-) = zip (-)
      (*) = zip (*)
-     negate         = sMap (negate)
-     abs            = sMap (abs)
-     signum         = sMap (signum)
+     negate         = sMap negate
+     abs            = sMap abs
+     signum         = sMap signum
      fromInteger    = srepeat . fromInteger
 
 
@@ -259,7 +259,7 @@ instance (Integral a) => Integral (S a) where
 
 instance (Fractional a) => Fractional (S a) where
      s / t = zip (Prelude./) s t
-     recip s = smap (recip) s
+     recip = smap recip
      fromRational r = srepeat (fromRational r)
 
 -- | unzip, specialized to Stream tuples
@@ -360,12 +360,12 @@ inits xs = Cons [] (fmap (shead xs :) (inits (stail xs)))
 tails xs = Cons xs (tails (stail xs))
 
 
-(<||)           h t                = Cons h t
+(<||)    = Cons
 shead     (Cons h _)               = h
 
 stail     (Cons _ t)               = t
 
-any_a                              = any_a
+anyA                              = anyA
 
 stake   0  ___________             =  []
 stake  (n) (Cons x xs)             =  x : stake (n-1) xs
@@ -382,11 +382,11 @@ ago    (n) (Cons _ xs)             =  (n-1) `ago` xs
 
 
 
-s |~| t   = shead s <|| (t) |~| (stail s)
+s |~| t   = shead s <|| t |~| stail s
 s |!| t = s `union` t
 
-map1 f   s          = f (shead s)  <|| (map1  f (stail s))
-sMap f  (Cons x xs) =  (f x)       <|| (sMap  f    xs    )
+map1 f   s          = f (shead s)  <|| map1  f (stail s)
+sMap f  (Cons x xs) = f    x       <|| sMap  f    xs    
 
 merge s@(Cons m s') t@(Cons n t') =
      if   m <= n
@@ -404,12 +404,12 @@ union s@(Cons m s') t@(Cons n t') =
           GT -> n <|| union s  t'
 
 --zip f s t                                                  = f (shead s) (shead t) <|| zip f (stail s) (stail t)
-sMap2  f  (Cons x xs) (Cons y ys)                           =  (f x y)     <||  (sMap2 f xs ys      )
-sMap3  f  (Cons x xs) (Cons y ys) (Cons z zs)               =  (f x y z)   <||  (sMap3 f xs ys zs   )
-sMap4  f  (Cons t ts) (Cons x xs) (Cons y ys) (Cons z zs)   =  (f t x y z) <||  (sMap4 f ts xs ys zs)
+sMap2  f  (Cons x xs) (Cons y ys)                           =  f x y     <||  sMap2 f xs ys
+sMap3  f  (Cons x xs) (Cons y ys) (Cons z zs)               =  f x y z   <||  sMap3 f xs ys zs
+sMap4  f  (Cons t ts) (Cons x xs) (Cons y ys) (Cons z zs)   =  f t x y z <||  sMap4 f ts xs ys zs
 
 
-smerge         (Cons m s) t             = m     <||  (smerge   t s )
+smerge         (Cons m s) t             = m     <|| smerge       t         s
 plus           (Cons m s) (Cons n t)    = m + n <|| plus         s         t
 alternate      (Cons m s) (Cons _ t)    = m     <|| alternate    t         s         
 interleave     (Cons m s) (Cons n t)    = m     <|| interleave   (n <|| t) s
@@ -507,9 +507,9 @@ sodd  (Cons _ (Cons n s)) = n <|| sodd s
 -- ^ from Hinze UFP p.45
 
 -- | mutually recursive
-s_even s                  = shead s <|| s_odd (stail s) 
+sEven s                  = shead s <|| sOdd (stail s) 
 -- ^ from Hinze UFP p.45
-s_odd  s                  =             s_even (stail s)
+sOdd  s                  =             sEven (stail s)
 -- ^ from Hinze UFP p.45
 
 
@@ -526,7 +526,7 @@ scan f z ~(Cons x xs) =  z <|| scan f (f z x) xs
 
 -- | @scan'@ is a strict scan.
 --
-scan' f z xs =  z <|| (scan' f $! (f z (shead xs))) (stail xs)
+scan' f z xs =  z <|| (scan' f $! f z (shead xs)) (stail xs)
 
 -- | 'scan1' is a variant of 'scan' that has no starting value argument:
 --
@@ -574,11 +574,11 @@ fwdFix g    = fix (grow g)
 revFix g    = fix (rgen g)
 
 
-grow  g     ~(Cons x xs) = (g []) <|| (grow (g . (x:)) xs)
-rgen' g ys  ~(Cons x xs) = (g ys) <|| (rgen' g (x:ys) xs)
+grow  g     ~(Cons x xs) =  g []  <|| grow (g . (x:)) xs
+rgen' g ys  ~(Cons x xs) =  g ys  <|| rgen' g (x:ys)  xs
 rgen  g                  = rgen' g []
 
-rep f []       = shead (f any_a)
+rep f []       = shead (f anyA)
 rep f (x:xs)   = rep (stail . f . (x <||) ) xs
 
 
@@ -617,7 +617,7 @@ rep f (x:xs)   = rep (stail . f . (x <||) ) xs
 
 unfold    (h,t) z              = Node (h z) (\x -> unfold (h,t) (t z x)   )
 cfix      (h,t) z              = fix        (groW         (h,t)    z      )
-groW      (h,t) z ~(Cons x xs) = (h z) <||  (groW         (h,t) (t z x) xs)
+groW      (h,t) z ~(Cons x xs) = h z   <||   groW         (h,t) (t z x) xs
 --generate  (h,t) z              = gen (gen' (unfold        (h,t)    z  ))
 
 
@@ -646,7 +646,7 @@ tOfRG (g, xs) x     = (g, x:xs)
 -- | utility function to map over adjacent elements in a list
 
 
-combStreams xxs = foldr (zipWith (:)) (Prelude.repeat []) xxs
+combStreams = foldr (zipWith (:)) (Prelude.repeat [])
 
 allEqual = and . mapAdjacent (==)
 mapAdjacent f xs = zipWith f xs (tail xs)
